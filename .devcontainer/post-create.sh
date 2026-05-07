@@ -1,41 +1,73 @@
 #!/usr/bin/env bash
 # Codespaces post-create. Sets up the workspace so `pnpm dev` Just Works.
-set -euo pipefail
+# Designed to be idempotent and fail loudly so the next step in the README
+# is obvious if something goes wrong.
 
 cd "$(dirname "$0")/.."
 
-echo "==> Enabling pnpm via corepack"
-corepack enable
-corepack prepare pnpm@10.0.0 --activate
+set -u
 
-# Bootstrap .env.local from the example. If the user set Codespaces secrets,
-# they appear as real env vars and override anything in this file.
+step() { printf "\n==> %s\n" "$1"; }
+warn() { printf "\n!!  %s\n" "$1"; }
+
+# ---------- pnpm ----------
+step "Setting up pnpm"
+if ! command -v pnpm >/dev/null 2>&1; then
+  if command -v corepack >/dev/null 2>&1; then
+    corepack enable || warn "corepack enable failed"
+    corepack prepare pnpm@10.0.0 --activate || warn "corepack prepare failed"
+  fi
+fi
+if ! command -v pnpm >/dev/null 2>&1; then
+  warn "pnpm still not on PATH; installing via npm"
+  npm install -g pnpm@10
+fi
+pnpm --version || { warn "pnpm install failed; run 'npm install -g pnpm' manually"; exit 1; }
+
+# ---------- env ----------
+step "Bootstrapping .env.local"
 if [ ! -f .env.local ]; then
-  echo "==> Creating .env.local from .env.example"
   cp .env.example .env.local
+  echo "Created .env.local from .env.example"
+else
+  echo ".env.local already exists; leaving it alone"
 fi
 
-echo "==> Installing dependencies"
-pnpm install --frozen-lockfile
+# ---------- deps ----------
+step "Installing dependencies"
+# Try frozen first for reproducibility; fall back to a regular install if the
+# lockfile drifts (e.g. after a dependency bump on the branch).
+if ! pnpm install --frozen-lockfile; then
+  warn "frozen-lockfile install failed; retrying without --frozen-lockfile"
+  pnpm install || { warn "pnpm install failed; run it manually"; exit 1; }
+fi
 
-echo "==> Starting Postgres in Docker"
-pnpm db:up
+# ---------- postgres ----------
+step "Starting Postgres in Docker"
+if ! docker --version >/dev/null 2>&1; then
+  warn "docker not available; skipping db setup. Once docker is up, run: pnpm db:up && pnpm db:migrate"
+  exit 0
+fi
+pnpm db:up || { warn "docker compose up failed; check 'docker compose logs postgres'"; exit 0; }
 
-echo "==> Waiting for Postgres to accept connections"
-for i in $(seq 1 30); do
+step "Waiting for Postgres to accept connections"
+ready=0
+for i in $(seq 1 60); do
   if docker compose exec -T postgres pg_isready -U networkmap -d networkmap >/dev/null 2>&1; then
     echo "Postgres is ready."
+    ready=1
     break
-  fi
-  if [ "$i" -eq 30 ]; then
-    echo "Postgres did not become ready in 30s. Check 'docker compose logs postgres'."
-    exit 1
   fi
   sleep 1
 done
+if [ "$ready" -ne 1 ]; then
+  warn "Postgres did not become ready in 60s. Check 'docker compose logs postgres' and re-run 'pnpm db:migrate' once it is up."
+  exit 0
+fi
 
-echo "==> Applying migrations and RLS policies"
-pnpm db:migrate
+# ---------- migrations ----------
+step "Applying migrations and RLS policies"
+pnpm db:migrate || warn "Migrations failed; re-run 'pnpm db:migrate' after fixing the error."
 
 cat <<'BANNER'
 
