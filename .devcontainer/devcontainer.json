@@ -1,0 +1,59 @@
+{
+  "name": "NetworkMap",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": true,
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [3000, 5432],
+  "portsAttributes": {
+    "3000": {
+      "label": "Network Map app",
+      "onAutoForward": "openPreview"
+    },
+    "5432": {
+      "label": "Postgres"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteEnv": {
+    "NEXT_PUBLIC_APP_URL": "https://${localEnv:CODESPACE_NAME}-3000.${localEnv:GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    }
+  },
+  "secrets": {
+    "NEXT_PUBLIC_SUPABASE_URL": {
+      "description": "Your Supabase project URL (https://xxx.supabase.co). Create a free project at supabase.com.",
+      "documentationUrl": "https://supabase.com/dashboard"
+    },
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
+      "description": "Supabase anon (public) key. Find it in Project Settings -> API."
+    },
+    "SUPABASE_SERVICE_ROLE_KEY": {
+      "description": "Supabase service role key. Project Settings -> API. Keep secret."
+    },
+    "SUPABASE_JWT_SECRET": {
+      "description": "Supabase JWT secret. Project Settings -> API -> JWT Settings."
+    },
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key for the agent. Optional; agent NOOPs without it.",
+      "documentationUrl": "https://console.anthropic.com/settings/keys"
+    }
+  }
+}

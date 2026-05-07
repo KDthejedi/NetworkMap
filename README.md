@@ -10,11 +10,29 @@ The functional architecture document is the single source of truth. Cross-refere
 
 ## Quick start
 
+### Option A: GitHub Codespaces (works from an iPad)
+
+The repo includes a `.devcontainer/` config that gives you a full dev environment in the browser, with Postgres + Node + pnpm preinstalled and migrations applied automatically.
+
+1. From the GitHub repo page on your iPad, tap the green **Code** button -> **Codespaces** -> **Create codespace on `claude/import-word-doc-EkbIb`**.
+2. Wait ~2 minutes for the post-create script to install deps, start Postgres, and run migrations.
+3. Set your secrets (one time, persists across rebuilds) at GitHub -> Settings -> Codespaces -> Secrets:
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` (from a free Supabase project)
+   - `ANTHROPIC_API_KEY` (optional; agent runs in NOOP mode without it)
+4. In the Codespaces terminal:
+   ```bash
+   pnpm db:seed   # optional demo data
+   pnpm dev
+   ```
+5. The **Ports** tab will offer a public https URL for port 3000. Open it in Safari.
+
+### Option B: Local development
+
 Prerequisites: Node 20+, pnpm 10+, Docker.
 
 ```bash
 cp .env.example .env.local
-# Fill in: ANTHROPIC_API_KEY, NEXT_PUBLIC_SUPABASE_URL/ANON_KEY (free Supabase project),
+# Fill in: ANTHROPIC_API_KEY, NEXT_PUBLIC_SUPABASE_URL/ANON_KEY,
 # SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET.
 
 pnpm install
@@ -25,6 +43,19 @@ pnpm dev                    # http://localhost:3000
 ```
 
 Health check: `curl http://localhost:3000/api/healthz`.
+
+### Getting the Supabase credentials
+
+1. Sign up at [supabase.com](https://supabase.com) (free tier is fine).
+2. Create a new project. Wait for it to provision.
+3. Project Settings -> API:
+   - **Project URL** -> `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon public** key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **service_role** key -> `SUPABASE_SERVICE_ROLE_KEY` (secret)
+   - **JWT Settings** -> **JWT Secret** -> `SUPABASE_JWT_SECRET`
+4. Authentication -> URL Configuration -> add your Codespaces URL (or `http://localhost:3000`) to Site URL and Redirect URLs.
+
+You only need Supabase for auth. The application data lives in your local/Codespace Postgres.
 
 ## Architecture at a glance
 
