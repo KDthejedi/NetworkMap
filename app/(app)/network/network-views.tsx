@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { Cluster, PulseBand } from "@/lib/db/schema";
 
-const GlobeView = dynamic(() => import("./_views/globe-view"), { ssr: false });
+const SolarView = dynamic(() => import("./_views/solar-view"), { ssr: false });
 const GraphView = dynamic(() => import("./_views/graph-view"), { ssr: false });
 
 type ContactRow = {
@@ -34,7 +34,7 @@ type Membership = {
   clusterColor: string;
 };
 
-type ViewMode = "globe" | "graph" | "list";
+type ViewMode = "solar" | "graph" | "list";
 
 export function NetworkViews({
   contacts,
@@ -45,7 +45,7 @@ export function NetworkViews({
   memberships: Membership[];
   clusters: Cluster[];
 }) {
-  const [view, setView] = useState<ViewMode>("globe");
+  const [view, setView] = useState<ViewMode>("solar");
   const [filterCluster, setFilterCluster] = useState<string | null>(null);
   const [filterBand, setFilterBand] = useState<PulseBand | null>(null);
   const [filterTier, setFilterTier] = useState<number | null>(null);
@@ -86,7 +86,7 @@ export function NetworkViews({
       <div className="flex flex-wrap gap-2">
         <SegmentedControl
           options={[
-            { value: "globe", label: "Globe" },
+            { value: "solar", label: "Solar" },
             { value: "graph", label: "Graph" },
             { value: "list", label: "List" },
           ]}
@@ -127,8 +127,8 @@ export function NetworkViews({
       </div>
 
       <section className="rounded-lg border bg-card">
-        {view === "globe" && (
-          <GlobeView contacts={filtered} clusters={clusters} memberships={memberships} />
+        {view === "solar" && (
+          <SolarView contacts={filtered} clusters={clusters} memberships={memberships} />
         )}
         {view === "graph" && (
           <GraphView contacts={filtered} clusters={clusters} memberships={memberships} />

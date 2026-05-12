@@ -13,7 +13,11 @@ const config: NextConfig = {
       { protocol: "https", hostname: "*.supabase.in" },
     ],
   },
-  transpilePackages: ["react-globe.gl", "react-force-graph-2d"],
+  transpilePackages: [
+    "react-force-graph-2d",
+    "@react-three/fiber",
+    "@react-three/drei",
+  ],
 };
 
 export default config;
