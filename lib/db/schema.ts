@@ -139,6 +139,22 @@ export const recommendationFeedbackAction = pgEnum(
   ["accepted", "snoozed", "dismissed", "completed"],
 );
 
+export const contactAlignment = pgEnum("contact_alignment", [
+  "personal",
+  "professional",
+  "both",
+]);
+
+export const ageCohort = pgEnum("age_cohort", [
+  "under_20",
+  "20s",
+  "30s",
+  "40s",
+  "50s",
+  "60s",
+  "70_plus",
+]);
+
 // ---------- users ----------
 
 export const users = pgTable(
@@ -247,6 +263,24 @@ export const contacts = pgTable(
     tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
     notes: text("notes"),
     expectedCadenceDays: integer("expected_cadence_days"),
+    alignment: contactAlignment("alignment"),
+    /**
+     * Demographic + attribute fields used for diversity / robustness analysis.
+     * race_or_ethnicity and gender are sensitive: spec section 11.2 calls for
+     * field-level encryption. The columns are jsonb so we can replace plaintext
+     * with an envelope-encrypted ciphertext payload later without a migration.
+     * Until KMS is wired, the value is just { value: string } in plaintext and
+     * the code path is centralized in lib/demographics/.
+     */
+    raceOrEthnicity: jsonb("race_or_ethnicity").$type<{ value: string } | null>(),
+    gender: jsonb("gender").$type<{ value: string } | null>(),
+    ageCohort: ageCohort("age_cohort"),
+    education: text("education"),
+    languages: text("languages").array().notNull().default(sql`ARRAY[]::text[]`),
+    professionalAffiliations: text("professional_affiliations")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
     tieStrength: integer("tie_strength").notNull().default(0),
     pulseBand: pulseBand("pulse_band").notNull().default("Dormant"),
     tieStrengthBreakdown: jsonb("tie_strength_breakdown")

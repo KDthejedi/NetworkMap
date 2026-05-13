@@ -11,6 +11,8 @@ import { TodaysPulse } from "@/components/todays-pulse";
 import { PulseHealthSummary } from "@/components/pulse-health-summary";
 import { RecentTouchpoints } from "@/components/recent-touchpoints";
 import { QuickActions } from "@/components/quick-actions";
+import { RobustnessWidget } from "@/components/robustness-widget";
+import { loadAndComputeRobustness } from "@/lib/robustness/load";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +61,7 @@ export default async function HomePage() {
     .orderBy(desc(touchpoints.occurredAt))
     .limit(10);
 
+  const robustness = await loadAndComputeRobustness(userId);
   const greeting = greetingFor(new Date());
 
   return (
@@ -78,7 +81,10 @@ export default async function HomePage() {
       </header>
 
       <TodaysPulse recommendations={todaysRecs} />
-      <PulseHealthSummary summary={bandSummary} />
+      <div className="grid gap-4 md:grid-cols-[1fr_280px]">
+        <PulseHealthSummary summary={bandSummary} />
+        <RobustnessWidget result={robustness} />
+      </div>
       <RecentTouchpoints touchpoints={recentTps} />
       <QuickActions />
     </div>

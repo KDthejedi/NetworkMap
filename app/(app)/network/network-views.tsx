@@ -7,6 +7,7 @@ import type { Cluster, PulseBand } from "@/lib/db/schema";
 
 const SolarView = dynamic(() => import("./_views/solar-view"), { ssr: false });
 const GraphView = dynamic(() => import("./_views/graph-view"), { ssr: false });
+const OverlapView = dynamic(() => import("./_views/overlap-view"), { ssr: false });
 
 type ContactRow = {
   id: string;
@@ -25,6 +26,13 @@ type ContactRow = {
   company: string | null;
   tags: string[];
   knownThroughContactId: string | null;
+  alignment: "personal" | "professional" | "both" | null;
+  industry: string | null;
+  raceOrEthnicity: string | null;
+  gender: string | null;
+  ageCohort: string | null;
+  languages: string[];
+  professionalAffiliations: string[];
 };
 
 type Membership = {
@@ -34,7 +42,7 @@ type Membership = {
   clusterColor: string;
 };
 
-type ViewMode = "solar" | "graph" | "list";
+type ViewMode = "solar" | "graph" | "overlap" | "list";
 
 export function NetworkViews({
   contacts,
@@ -88,6 +96,7 @@ export function NetworkViews({
           options={[
             { value: "solar", label: "Solar" },
             { value: "graph", label: "Graph" },
+            { value: "overlap", label: "Overlap" },
             { value: "list", label: "List" },
           ]}
           value={view}
@@ -132,6 +141,9 @@ export function NetworkViews({
         )}
         {view === "graph" && (
           <GraphView contacts={filtered} clusters={clusters} memberships={memberships} />
+        )}
+        {view === "overlap" && (
+          <OverlapView contacts={filtered} clusters={clusters} memberships={memberships} />
         )}
         {view === "list" && (
           <ListView contacts={filtered} membershipsByContact={membershipsByContact} />

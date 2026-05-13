@@ -12,6 +12,7 @@ import { apiError, apiOk } from "@/lib/api/error";
 import { toSnake } from "@/lib/api/serialize";
 import { writeAuditLog } from "@/lib/audit";
 import { geocode } from "@/lib/geocode";
+import { encodeSensitive } from "@/lib/demographics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,16 @@ const createSchema = z.object({
   tier: z.number().int().min(0).max(10).default(1),
   known_through_contact_id: z.string().uuid().nullable().optional(),
   cluster_ids: z.array(z.string().uuid()).default([]),
+  alignment: z.enum(["personal", "professional", "both"]).nullable().optional(),
+  race_or_ethnicity: z.string().max(120).nullable().optional(),
+  gender: z.string().max(120).nullable().optional(),
+  age_cohort: z
+    .enum(["under_20", "20s", "30s", "40s", "50s", "60s", "70_plus"])
+    .nullable()
+    .optional(),
+  education: z.string().max(200).nullable().optional(),
+  languages: z.array(z.string()).optional(),
+  professional_affiliations: z.array(z.string()).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -150,6 +161,13 @@ export async function POST(request: NextRequest) {
       tags: data.tags ?? [],
       notes: data.notes ?? null,
       expectedCadenceDays: data.expected_cadence_days ?? null,
+      alignment: data.alignment ?? null,
+      raceOrEthnicity: encodeSensitive(data.race_or_ethnicity),
+      gender: encodeSensitive(data.gender),
+      ageCohort: data.age_cohort ?? null,
+      education: data.education ?? null,
+      languages: data.languages ?? [],
+      professionalAffiliations: data.professional_affiliations ?? [],
     })
     .returning();
 

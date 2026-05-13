@@ -27,6 +27,13 @@ export default async function NetworkPage() {
       company: contacts.company,
       tags: contacts.tags,
       knownThroughContactId: contacts.knownThroughContactId,
+      alignment: contacts.alignment,
+      industry: contacts.industry,
+      raceOrEthnicity: contacts.raceOrEthnicity,
+      gender: contacts.gender,
+      ageCohort: contacts.ageCohort,
+      languages: contacts.languages,
+      professionalAffiliations: contacts.professionalAffiliations,
     })
     .from(contacts)
     .where(
@@ -61,6 +68,8 @@ export default async function NetworkPage() {
         contacts={rows.map((r) => ({
           ...r,
           lastTouchpointAt: r.lastTouchpointAt ? r.lastTouchpointAt.toISOString() : null,
+          raceOrEthnicity: r.raceOrEthnicity?.value ?? null,
+          gender: r.gender?.value ?? null,
         }))}
         memberships={memberships}
         clusters={allClusters}

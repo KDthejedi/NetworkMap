@@ -12,6 +12,7 @@ import { apiError, apiOk } from "@/lib/api/error";
 import { toSnake } from "@/lib/api/serialize";
 import { writeAuditLog } from "@/lib/audit";
 import { recomputePulseForContact } from "@/lib/pulse/persist";
+import { encodeSensitive } from "@/lib/demographics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,16 @@ const patchSchema = z.object({
   notes: z.string().nullable().optional(),
   expected_cadence_days: z.number().int().positive().nullable().optional(),
   tags: z.array(z.string()).optional(),
+  alignment: z.enum(["personal", "professional", "both"]).nullable().optional(),
+  race_or_ethnicity: z.string().nullable().optional(),
+  gender: z.string().nullable().optional(),
+  age_cohort: z
+    .enum(["under_20", "20s", "30s", "40s", "50s", "60s", "70_plus"])
+    .nullable()
+    .optional(),
+  education: z.string().nullable().optional(),
+  languages: z.array(z.string()).optional(),
+  professional_affiliations: z.array(z.string()).optional(),
 });
 
 export async function GET(_request: NextRequest, { params }: Ctx) {
@@ -83,6 +94,13 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   if (data.notes !== undefined) updateValues.notes = data.notes;
   if (data.expected_cadence_days !== undefined) updateValues.expectedCadenceDays = data.expected_cadence_days;
   if (data.tags !== undefined) updateValues.tags = data.tags;
+  if (data.alignment !== undefined) updateValues.alignment = data.alignment;
+  if (data.race_or_ethnicity !== undefined) updateValues.raceOrEthnicity = encodeSensitive(data.race_or_ethnicity);
+  if (data.gender !== undefined) updateValues.gender = encodeSensitive(data.gender);
+  if (data.age_cohort !== undefined) updateValues.ageCohort = data.age_cohort;
+  if (data.education !== undefined) updateValues.education = data.education;
+  if (data.languages !== undefined) updateValues.languages = data.languages;
+  if (data.professional_affiliations !== undefined) updateValues.professionalAffiliations = data.professional_affiliations;
 
   const [before] = await adminDb
     .select()
